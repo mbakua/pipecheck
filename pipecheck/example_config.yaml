@@ -1,0 +1,33 @@
+log_level: INFO
+
+alerts:
+  email: ops@example.com
+  slack_webhook: https://hooks.slack.com/services/EXAMPLE
+
+pipelines:
+  - name: daily_sales_ingest
+    source: s3://data-bucket/sales/
+    schedule: "0 6 * * *"
+    timeout_seconds: 600
+    alert_on_failure: true
+    tags:
+      - sales
+      - daily
+
+  - name: user_events_stream
+    source: kafka://broker:9092/user-events
+    schedule: "*/5 * * * *"
+    timeout_seconds: 120
+    alert_on_failure: true
+    tags:
+      - events
+      - realtime
+
+  - name: weekly_report_export
+    source: postgres://db:5432/reports
+    schedule: "0 8 * * 1"
+    timeout_seconds: 900
+    alert_on_failure: false
+    tags:
+      - reports
+      - weekly
