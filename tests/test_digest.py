@@ -56,6 +56,19 @@ def test_build_digest_excludes_old(tmp_db):
     assert entries[0].total_runs == 0
 
 
+def test_build_digest_multiple_pipelines(tmp_db):
+    """Entries are returned in the same order as the requested pipeline list."""
+    _insert(tmp_db, "pipe-x", ok=True)
+    _insert(tmp_db, "pipe-y", ok=False)
+
+    entries = build_digest(tmp_db, ["pipe-x", "pipe-y"], hours=24)
+    assert len(entries) == 2
+    assert entries[0].pipeline == "pipe-x"
+    assert entries[1].pipeline == "pipe-y"
+    assert entries[0].success_runs == 1
+    assert entries[1].failure_runs == 1
+
+
 def test_format_digest_text():
     entries = [
         DigestEntry("alpha", 10, 9, 1, 90.0, "stable", False),
