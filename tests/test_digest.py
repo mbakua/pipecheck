@@ -69,6 +69,19 @@ def test_build_digest_multiple_pipelines(tmp_db):
     assert entries[1].failure_runs == 1
 
 
+def test_build_digest_all_failures(tmp_db):
+    """A pipeline with only failures should report 0% success rate."""
+    for _ in range(3):
+        _insert(tmp_db, "pipe-c", ok=False)
+
+    entries = build_digest(tmp_db, ["pipe-c"], hours=24)
+    e = entries[0]
+    assert e.total_runs == 3
+    assert e.success_runs == 0
+    assert e.failure_runs == 3
+    assert e.success_rate == 0.0
+
+
 def test_format_digest_text():
     entries = [
         DigestEntry("alpha", 10, 9, 1, 90.0, "stable", False),
