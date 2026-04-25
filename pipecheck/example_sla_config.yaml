@@ -1,0 +1,35 @@
+# Example pipecheck configuration with SLA policies.
+# Add 'sla_minutes' to any pipeline to enable SLA monitoring.
+# Run: pipecheck sla check --config pipecheck.yaml --db pipecheck_history.db
+
+alert:
+  slack_webhook: ""
+  webhook_url: ""
+  on_failure: true
+
+pipelines:
+  - name: orders-etl
+    endpoint: https://internal.example.com/health/orders-etl
+    expected_status: 200
+    timeout: 10
+    # Alert if no successful run recorded in the last 30 minutes
+    sla_minutes: 30
+
+  - name: inventory-sync
+    endpoint: https://internal.example.com/health/inventory-sync
+    expected_status: 200
+    timeout: 15
+    # Runs hourly; breach if no success in 90 minutes
+    sla_minutes: 90
+
+  - name: reporting-nightly
+    endpoint: https://internal.example.com/health/reporting
+    expected_status: 200
+    timeout: 30
+    # Runs once per day; allow up to 25 hours before breaching
+    sla_minutes: 1500
+
+  - name: no-sla-pipeline
+    endpoint: https://internal.example.com/health/misc
+    expected_status: 200
+    # No sla_minutes — excluded from SLA checks
