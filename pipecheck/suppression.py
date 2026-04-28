@@ -23,7 +23,12 @@ def _load_raw(path: Path) -> list:
     if not path.exists():
         return []
     with path.open() as fh:
-        return json.load(fh)
+        try:
+            return json.load(fh)
+        except json.JSONDecodeError as exc:
+            raise ValueError(
+                f"Suppression file '{path}' contains invalid JSON: {exc}"
+            ) from exc
 
 
 def load_rules(path: Path = DEFAULT_SUPPRESSION_FILE) -> List[SuppressionRule]:
@@ -80,3 +85,21 @@ def is_suppressed(
         if re.search(rule.pattern, pipeline_name):
             return rule
     return None
+
+
+def list_expired_rules(
+    path: Path = DEFAULT_SUPPRESSION_FILE,
+    now: Optional[str] = None,
+) -> List[SuppressionRule]:
+    """Return all rules that have already passed their expiry date.
+
+    Useful for housekeeping: callers can inspect stale rules and decide
+    whether to remove them via :func:`remove_rule`.
+    """
+    from datetime import datetime, timezone
+
+    _now = now or datetime.now(timezone.utc).isoformat()
+    return [
+        rule for rule in load_rules(path)
+        if rule.expires_at and rule.expires_at < _now
+    ]
