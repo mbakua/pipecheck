@@ -1,0 +1,45 @@
+# Example quota configuration for pipecheck
+# Quotas limit how many times a pipeline can be checked within a rolling time window.
+# This prevents runaway polling or misconfigured cron jobs from hammering endpoints.
+#
+# Quota rules are stored in a JSON state file (default: .pipecheck_quota.json).
+# Use the `pipecheck quota` sub-commands to manage rules.
+
+# CLI usage examples:
+#
+#   Set a quota: allow at most 6 checks per hour for 'payments-etl'
+#     pipecheck quota set payments-etl --window 3600 --max 6
+#
+#   Check current status:
+#     pipecheck quota status payments-etl
+#
+#   List all quota rules:
+#     pipecheck quota list
+#
+#   Remove a quota rule:
+#     pipecheck quota remove payments-etl
+#
+# Integrating with run:
+#   Before running checks you can gate execution:
+#
+#     pipecheck quota status my-pipeline || exit 0
+#     pipecheck run --pipeline my-pipeline
+#     # (record the check via your wrapper or extend cli.py to call record_check)
+#
+# Recommended windows:
+#   - 60     : per-minute burst protection
+#   - 3600   : hourly cap (most common)
+#   - 86400  : daily cap
+
+pipelines:
+  - name: payments-etl
+    endpoint: https://internal.example.com/health/payments
+    expected_status: 200
+    # Quota: max 6 checks per hour
+    # Set via: pipecheck quota set payments-etl --window 3600 --max 6
+
+  - name: user-sync
+    endpoint: https://internal.example.com/health/user-sync
+    expected_status: 200
+    # Quota: max 24 checks per day
+    # Set via: pipecheck quota set user-sync --window 86400 --max 24
