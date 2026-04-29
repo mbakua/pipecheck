@@ -48,7 +48,15 @@ def load_snapshot(
     path = _snapshot_path(label, directory)
     if not path.exists():
         return None
-    data = json.loads(path.read_text())
+    try:
+        data = json.loads(path.read_text())
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"Snapshot file for '{label}' contains invalid JSON: {exc}") from exc
+    if "captured_at" not in data or "results" not in data:
+        raise ValueError(
+            f"Snapshot file for '{label}' is missing required fields "
+            "('captured_at', 'results')."
+        )
     return Snapshot(**data)
 
 
